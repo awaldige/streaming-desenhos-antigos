@@ -8,7 +8,7 @@ const capasPadrao = {
 
 let listaOriginal = [];
 let usuarioLogado = { isAdmin: false };
-let videoAtual = ""; // Variável global para o link do vídeo ativo
+let videoAtual = ""; 
 
 /* ===== 1. SISTEMA DE AUTENTICAÇÃO ===== */
 
@@ -109,13 +109,10 @@ function filtrarDesenhos() {
 function atualizarBannerDinamico(d) {
     const banner = document.getElementById("banner");
     const info = document.getElementById("banner-info");
-    const playerContainer = document.getElementById("player-container");
     const btnAssistir = document.getElementById("btnAssistir");
 
-    // Resetar player anterior
-    playerContainer.style.display = "none";
-    playerContainer.innerHTML = "";
-    info.style.display = "block";
+    // Fecha qualquer vídeo que esteja rodando ao trocar de desenho
+    fecharVideo();
 
     const capa = d.imagem ? `imagens/${d.imagem}` : `https://picsum.photos/seed/${d.id_desenho}/800/450`;
     banner.style.backgroundImage = `linear-gradient(to top, #141414, transparent), url(${capa})`;
@@ -123,7 +120,6 @@ function atualizarBannerDinamico(d) {
     document.getElementById("banner-titulo").innerText = d.nome;
     document.getElementById("banner-desc").innerText = d.descricao || "Sem descrição disponível.";
 
-    // Lógica do Vídeo
     videoAtual = d.video_url || "";
     btnAssistir.style.display = videoAtual ? "block" : "none";
 }
@@ -136,23 +132,34 @@ function iniciarVideo() {
     info.style.display = "none";
     playerContainer.style.display = "block";
 
-    // Suporte para YouTube ou link direto (MP4)
+    // Botão de fechar flutuante
+    let htmlPlayer = `<button id="btnFecharVideo" onclick="fecharVideo()" style="position: absolute; top: 20px; right: 20px; z-index: 100; background: rgba(0,0,0,0.5); color: white; border: 2px solid white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 20px;">✕</button>`;
+
     if (videoAtual.includes("youtube.com") || videoAtual.includes("youtu.be")) {
-        // Extrai ID do vídeo do youtube
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
         const match = videoAtual.match(regExp);
         const idVideo = (match && match[2].length == 11) ? match[2] : null;
         
-        playerContainer.innerHTML = `
-            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${idVideo}?autoplay=1" 
+        htmlPlayer += `
+            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${idVideo}?autoplay=1&rel=0" 
             frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
     } else {
-        playerContainer.innerHTML = `
+        htmlPlayer += `
             <video width="100%" height="100%" controls autoplay>
                 <source src="${videoAtual}" type="video/mp4">
                 Seu navegador não suporta este formato de vídeo.
             </video>`;
     }
+    playerContainer.innerHTML = htmlPlayer;
+}
+
+function fecharVideo() {
+    const playerContainer = document.getElementById("player-container");
+    const info = document.getElementById("banner-info");
+
+    playerContainer.innerHTML = "";
+    playerContainer.style.display = "none";
+    info.style.display = "block";
 }
 
 /* ===== 4. GESTÃO (CRUD) ===== */
@@ -189,7 +196,7 @@ function editarDesenho(id, nome, ano, descricao, video) {
     document.getElementById("nome").value = nome;
     document.getElementById("ano").value = ano;
     document.getElementById("descricao").value = descricao;
-    document.getElementById("video_url").value = video; // Carrega o link do vídeo
+    document.getElementById("video_url").value = video; 
     
     document.getElementById("modal-titulo").innerText = "Editar Desenho";
     document.getElementById("btnEnviar").innerText = "Atualizar Desenho";
@@ -203,20 +210,19 @@ document.getElementById("formDesenho").onsubmit = async (e) => {
     const idEdicao = document.getElementById("edit_id").value;
     const formData = new FormData(e.target);
     
-    // Garantindo que todos os campos vão no formData
-    formData.append("nome", document.getElementById("nome").value);
-    formData.append("ano", document.getElementById("ano").value);
-    formData.append("descricao", document.getElementById("descricao").value);
-    formData.append("video_url", document.getElementById("video_url").value);
-    
+    // Adiciona explicitamente o ID se for edição
     if (idEdicao) formData.append("id", idEdicao);
 
     const url = idEdicao ? "api/editar.php" : "api/adicionar.php";
     try {
         const res = await fetch(url, { method: "POST", body: formData });
         const dados = await res.json();
-        if (dados.sucesso) { fecharModal(); carregarDesenhos(); }
-        else { alert("Erro: " + dados.erro); }
+        if (dados.sucesso) { 
+            fecharModal(); 
+            carregarDesenhos(); 
+        } else { 
+            alert("Erro: " + dados.erro); 
+        }
     } catch (erro) { alert("Erro na conexão."); }
 };
 
