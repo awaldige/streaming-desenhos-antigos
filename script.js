@@ -5,136 +5,129 @@ const capasPadrao = {
     "pica-pau": "imagens/pica-pau.png"
 };
 
-function normalizarTexto(txt) {
-    return txt.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-}
+let listaOriginal = [];
 
+// === INICIALIZAÇÃO ===
 async function carregarDesenhos() {
     try {
         const resposta = await fetch("api/desenhos.php");
-        const desenhos = await resposta.json();
-        const lista = document.getElementById("lista");
-        lista.innerHTML = "";
+        listaOriginal = await resposta.json(); 
+        renderizarCards(listaOriginal);
+        if (listaOriginal.length > 0) atualizarBannerDinamico(listaOriginal[0]);
+    } catch (erro) { console.error("Erro ao carregar:", erro); }
+}
 
-        desenhos.forEach((d, index) => {
-            const nomeNorm = normalizarTexto(d.nome);
-            let capa = d.imagem ? `imagens/${d.imagem}` : (capasPadrao[nomeNorm] || `https://picsum.photos/seed/${index}/300/450`);
+// === RENDERIZAÇÃO ===
+function renderizarCards(desenhos) {
+    const lista = document.getElementById("lista");
+    lista.innerHTML = "";
 
-            // Escapar aspas simples para não quebrar o onclick do botão
-            const nomeEscapado = d.nome.replace(/'/g, "\\'");
-            const descEscapada = (d.descricao || "").replace(/'/g, "\\'");
+    desenhos.forEach((d, index) => {
+        const nomeNorm = d.nome.toLowerCase().trim();
+        let capa = d.imagem ? `imagens/${d.imagem}` : (capasPadrao[nomeNorm] || `https://picsum.photos/seed/${d.id_desenho}/300/450`);
 
-            const card = document.createElement("div");
-            card.className = "card";
-            card.innerHTML = `
-                <img src="${capa}" alt="${d.nome}">
-                <div class="info">
-                    <h3>${d.nome}</h3>
-                    <p>${d.ano_lancamento}</p>
-                    <div class="acoes">
-                        <button onclick="event.stopPropagation(); editarDesenho(${d.id_desenho}, '${nomeEscapado}', '${d.ano_lancamento}', '${descEscapada}')">✏️</button>
-                        <button onclick="event.stopPropagation(); excluirDesenho(${d.id_desenho})">🗑️</button>
-                    </div>
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+            <img src="${capa}" alt="${d.nome}">
+            <div class="info">
+                <h3>${d.nome}</h3>
+                <p>${d.ano_lancamento}</p>
+                <div class="acoes">
+                    <button onclick="event.stopPropagation(); editarDesenho(${d.id_desenho}, '${d.nome.replace(/'/g, "\\'")}', '${d.ano_lancamento}', '${(d.descricao || "").replace(/'/g, "\\'")}')">✏️</button>
+                    <button onclick="event.stopPropagation(); excluirDesenho(${d.id_desenho})">🗑️</button>
                 </div>
-            `;
-
-            card.addEventListener("click", () => atualizarBanner(capa, d));
-            lista.appendChild(card);
-            if (index === 0) atualizarBanner(capa, d);
-        });
-    } catch (erro) {
-        console.error("Erro ao carregar desenhos:", erro);
-    }
+            </div>
+        `;
+        card.onclick = () => atualizarBannerDinamico(d);
+        lista.appendChild(card);
+    });
 }
 
-// NOVA FUNÇÃO: EDITAR
-async function editarDesenho(id, nomeAntigo, anoAntigo, descAntiga) {
-    const novoNome = prompt("Editar Nome:", nomeAntigo);
-    if (novoNome === null) return; // Cancela se o usuário desistir
-
-    const novoAno = prompt("Editar Ano:", anoAntigo);
-    const novaDesc = prompt("Editar Descrição:", descAntiga);
-
-    const formData = new FormData();
-    formData.append("id", id);
-    formData.append("nome", novoNome);
-    formData.append("ano", novoAno);
-    formData.append("descricao", novaDesc);
-
-    try {
-        const res = await fetch("api/editar.php", {
-            method: "POST",
-            body: formData
-        });
-        const dados = await res.json();
-
-        if (dados.sucesso) {
-            alert("Atualizado com sucesso!");
-            carregarDesenhos();
-        } else {
-            alert("Erro ao atualizar: " + dados.erro);
-        }
-    } catch (erro) {
-        alert("Erro na conexão com o servidor.");
-    }
+// === BUSCA ===
+function filtrarDesenhos() {
+    const termo = document.getElementById("inputBusca").value.toLowerCase();
+    const filtrados = listaOriginal.filter(d => 
+        d.nome.toLowerCase().includes(termo) || (d.descricao && d.descricao.toLowerCase().includes(termo))
+    );
+    renderizarCards(filtrados);
 }
 
-function atualizarBanner(capa, desenho) {
-    const banner = document.getElementById("banner");
-    if (!banner) return;
-    banner.style.opacity = 0.5;
-    setTimeout(() => {
-        banner.style.backgroundImage = `linear-gradient(to top, #141414, transparent), url(${capa})`;
-        document.getElementById("banner-titulo").textContent = desenho.nome;
-        document.getElementById("banner-desc").textContent = desenho.descricao || "";
-        banner.style.opacity = 1;
-    }, 300);
+// === MODAL E PREVIEW ===
+function abrirModal() {
+    document.getElementById("modalCadastro").style.display = "block";
 }
 
-document.getElementById("formDesenho").addEventListener("submit", async (e) => {
+function fecharModal() {
+    document.getElementById("modalCadastro").style.display = "none";
+    document.getElementById("formDesenho").reset();
+    document.getElementById("edit_id").value = "";
+    document.getElementById("container-preview").style.display = "none";
+    document.getElementById("modal-titulo").innerText = "Adicionar Desenho";
+}
+
+function previewImagem(event) {
+    const reader = new FileReader();
+    reader.onload = function() {
+        const output = document.getElementById('img-preview');
+        output.src = reader.result;
+        document.getElementById('container-preview').style.display = 'block';
+    };
+    if(event.target.files[0]) reader.readAsDataURL(event.target.files[0]);
+}
+
+// === EDITAR (PREENCHER MODAL) ===
+function editarDesenho(id, nome, ano, descricao) {
+    document.getElementById("edit_id").value = id;
+    document.getElementById("nome").value = nome;
+    document.getElementById("ano").value = ano;
+    document.getElementById("descricao").value = descricao;
+    
+    document.getElementById("modal-titulo").innerText = "Editar Desenho";
+    document.getElementById("btnEnviar").innerText = "Atualizar Desenho";
+    abrirModal();
+}
+
+// === SUBMIT (SALVAR OU ATUALIZAR) ===
+document.getElementById("formDesenho").onsubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData();
+    const idEdicao = document.getElementById("edit_id").value;
+    const formData = new FormData(e.target);
+    
+    // Adicionamos os campos manualmente para garantir
     formData.append("nome", document.getElementById("nome").value);
     formData.append("ano", document.getElementById("ano").value);
     formData.append("descricao", document.getElementById("descricao").value);
-    
-    const foto = document.getElementById("imagem").files[0];
-    if (foto) formData.append("imagem", foto);
+    if (idEdicao) formData.append("id", idEdicao);
+
+    const url = idEdicao ? "api/editar.php" : "api/adicionar.php";
 
     try {
-        const res = await fetch("api/adicionar.php", { method: "POST", body: formData });
+        const res = await fetch(url, { method: "POST", body: formData });
         const dados = await res.json();
-
         if (dados.sucesso) {
-            alert("Salvo com sucesso!");
-            e.target.reset();
+            fecharModal();
             carregarDesenhos();
-        } else {
-            alert("Erro ao salvar: " + dados.erro);
-        }
-    } catch (erro) {
-        alert("Erro ao processar cadastro.");
-    }
-});
+        } else { alert("Erro: " + dados.erro); }
+    } catch (erro) { alert("Erro na conexão."); }
+};
 
-async function excluirDesenho(id) {
-    if (!confirm("Deseja excluir este desenho?")) return;
-    
-    const formData = new FormData();
-    formData.append("id", id);
-
-    try {
-        const res = await fetch("api/excluir.php", { method: "POST", body: formData });
-        const dados = await res.json();
-        
-        if (dados.sucesso) {
-            carregarDesenhos();
-        } else {
-            alert("Erro ao excluir.");
-        }
-    } catch (erro) {
-        alert("Erro na conexão.");
-    }
+// === BANNER E EXCLUIR ===
+function atualizarBannerDinamico(d) {
+    const banner = document.getElementById("banner");
+    const capa = d.imagem ? `imagens/${d.imagem}` : `https://picsum.photos/seed/${d.id_desenho}/800/450`;
+    banner.style.backgroundImage = `linear-gradient(to top, #141414, transparent), url(${capa})`;
+    document.getElementById("banner-titulo").innerText = d.nome;
+    document.getElementById("banner-desc").innerText = d.descricao || "";
 }
 
+async function excluirDesenho(id) {
+    if (!confirm("Excluir este desenho?")) return;
+    const fd = new FormData(); fd.append("id", id);
+    const res = await fetch("api/excluir.php", { method: "POST", body: fd });
+    const dados = await res.json();
+    if (dados.sucesso) carregarDesenhos();
+}
+
+window.onclick = (e) => { if (e.target.className == "modal") fecharModal(); };
 carregarDesenhos();
