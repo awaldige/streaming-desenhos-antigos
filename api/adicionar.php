@@ -1,20 +1,32 @@
 <?php
-mysqli_report(MYSQLI_REPORT_OFF);
+// Exibir erros para debug
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 header("Content-Type: application/json; charset=utf-8");
 
-// Conexão na porta 3308
-$conn = @new mysqli("localhost", "root", "", "desenhos_antigos", 3308);
+// --- CONFIGURAÇÃO AIVEN ---
+$host = "mysql-63c6648-streaming-desenhos.j.aivencloud.com";
+$port = 28840;
+$user = "avnadmin";
+$pass = "AVNS_y1R_KaHJC0qp4VAHb_k"; 
+$dbname = "defaultdb";
 
-if ($conn->connect_error) {
-    echo json_encode(["sucesso" => false, "erro" => "Conexão falhou na porta 3308"]);
+// Inicializa a conexão com SSL
+$conn = mysqli_init();
+mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
+$conectar = @mysqli_real_connect($conn, $host, $user, $pass, $dbname, $port, NULL, MYSQLI_CLIENT_SSL);
+
+if (!$conectar) {
+    echo json_encode(["sucesso" => false, "erro" => "Falha na conexão com Aiven"]);
     exit;
 }
+// --------------------------
 
-// Capturando os dados (incluindo o novo campo video_url)
 $nome = $_POST["nome"] ?? '';
 $ano = $_POST["ano"] ?? 0;
 $descricao = $_POST["descricao"] ?? '';
-$video_url = $_POST["video_url"] ?? ''; // NOVO CAMPO
+$video_url = $_POST["video_url"] ?? '';
 $imagemNome = null;
 
 // Lógica da Imagem
@@ -27,7 +39,7 @@ if (!empty($_FILES["imagem"]["name"])) {
     move_uploaded_file($_FILES["imagem"]["tmp_name"], $diretorio . $imagemNome);
 }
 
-// Ajuste no Prepare e no Bind_Param (adicionado mais um "s" para a string do vídeo)
+// Prepare e Bind_Param usando a conexão SSL ($conn)
 $stmt = $conn->prepare("INSERT INTO desenhos (nome, ano_lancamento, descricao, imagem, video_url) VALUES (?, ?, ?, ?, ?)");
 $stmt->bind_param("sisss", $nome, $ano, $descricao, $imagemNome, $video_url);
 
@@ -41,3 +53,4 @@ if ($resultado) {
 
 $stmt->close();
 $conn->close();
+?>
