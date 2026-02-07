@@ -1,25 +1,29 @@
 <?php
 // Impede o PHP de enviar erros em formato HTML (evita o erro 'Unexpected token <')
-mysqli_report(MYSQLI_REPORT_OFF);
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 header("Content-Type: application/json; charset=utf-8");
 
-// 1. Configuração da Conexão (Porta 3308)
-$host = "localhost";
-$user = "root";
-$pass = "";
-$db   = "desenhos_antigos";
-$port = 3308;
+// --- CONFIGURAÇÃO AIVEN (Ajuste a sua senha abaixo) ---
+$host = "mysql-63c6648-streaming-desenhos.j.aivencloud.com";
+$port = 28840;
+$user = "avnadmin";
+$pass = "AVNS_y1R_KaHJC0qp4VAHb_k"; 
+$dbname = "defaultdb";
 
-$conn = @new mysqli($host, $user, $pass, $db, $port);
+// Inicializa a conexão com SSL
+$conn = mysqli_init();
+mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
+$conectar = @mysqli_real_connect($conn, $host, $user, $pass, $dbname, $port, NULL, MYSQLI_CLIENT_SSL);
 
-// Verifica se a conexão falhou
-if ($conn->connect_error) {
+if (!$conectar) {
     echo json_encode([
         "sucesso" => false, 
-        "erro" => "Falha na conexão (Porta 3308): " . $conn->connect_error
+        "erro" => "Falha na conexão com Aiven: " . mysqli_connect_error()
     ]);
     exit;
 }
+// ------------------------------------------------------
 
 // 2. Captura o ID enviado pelo JavaScript (FormData)
 $id = $_POST["id"] ?? null;
@@ -31,7 +35,6 @@ if (!$id) {
 
 try {
     // 3. BUSCAR A IMAGEM ANTES DE EXCLUIR O REGISTRO
-    // Precisamos do nome do arquivo para deletá-lo da pasta imagens/
     $sqlBusca = "SELECT imagem FROM desenhos WHERE id_desenho = ?";
     $stmtBusca = $conn->prepare($sqlBusca);
     $stmtBusca->bind_param("i", $id);
@@ -55,7 +58,6 @@ try {
     $stmtDel->bind_param("i", $id);
     
     if ($stmtDel->execute()) {
-        // Se deletou pelo menos uma linha
         if ($stmtDel->affected_rows > 0) {
             echo json_encode(["sucesso" => true]);
         } else {
