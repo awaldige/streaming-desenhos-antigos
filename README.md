@@ -1,4 +1,5 @@
 📺 Desenhos Antigos — Streaming Retrô & Cloud Architecture
+
 📖 Visão Geral
 Este é um projeto Full Stack que simula uma plataforma de streaming focada em desenhos clássicos. O sistema evoluiu de um ambiente local para uma arquitetura baseada em nuvem, utilizando integração entre múltiplas plataformas para garantir persistência de dados e alta disponibilidade de mídia.
 
@@ -51,14 +52,32 @@ Como o projeto está em produção, você pode acessá-lo diretamente pelo link:
 
 (https://streaming-desenhos-antigos.onrender.com/)
 
-Para rodar localmente:
+🚀 Próximos Passos & Melhorias Futuras
+Para tornar a plataforma ainda mais robusta e completa, estão planeadas as seguintes evoluções:
 
-Clone este repositório.
+🛠️ Evoluções Técnicas
+[ ] Sistema de Cache: Implementar Redis ou cache via Service Workers para acelerar o carregamento das listas de desenhos.
 
-Configure as variáveis de conexão (Host, Porta, Senha SSL) em api/ para apontar para seu banco.
+[ ] Autenticação JWT: Substituir a validação simples por JSON Web Tokens (JWT) para uma comunicação API-Client mais segura e profissional.
 
-Certifique-se de ter a extensão php-curl ativa para os uploads.
+[ ] Refatoração para POO: Migrar o código PHP procedural para Programação Orientada a Objetos (POO) utilizando o padrão MVC.
 
-Configure seu Cloud Name e Upload Preset nos arquivos de API.
+[ ] Dockerização: Criar um docker-compose para facilitar o setup do ambiente de desenvolvimento por outros programadores.
+
+📺 Funcionalidades para o Utilizador
+[ ] Minha Lista (Favoritos): Implementar um sistema de favoritos utilizando localStorage ou persistência no banco de dados.
+
+[ ] Sistema de Episódios: Alterar a estrutura do banco de dados para suportar múltiplas temporadas e listas de episódios por desenho.
+
+[ ] Categorização por Tags: Filtros avançados por estúdio (Hanna-Barbera, Disney, Warner Bros) e género (Ação, Comédia, Mistério).
+
+[ ] Modo Kids: Uma interface ainda mais simplificada e com bloqueio de funções administrativas para crianças.
+
+🎨 Experiência & Interface
+[ ] Lazy Loading: Carregamento progressivo das capas para otimizar o consumo de dados e a performance inicial.
+
+[ ] PWA (Progressive Web App): Transformar o site numa PWA para que possa ser "instalado" no telemóvel e acedido como uma app nativa.
+
+[ ] Skeleton Screens: Substituir os spinners de carregamento por placeholders elegantes enquanto os dados são puxados da API.
 
 © 2026 - Desenvolvido por André Waldige
