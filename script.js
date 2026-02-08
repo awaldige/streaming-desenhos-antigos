@@ -76,7 +76,16 @@ function renderizarCards(desenhos) {
     lista.innerHTML = "";
     desenhos.forEach((d) => {
         const nomeNorm = d.nome.toLowerCase().trim();
-        let capa = d.imagem ? `imagens/${d.imagem}` : (capasPadrao[nomeNorm] || `https://picsum.photos/seed/${d.id_desenho}/300/450`);
+        
+        // --- AJUSTE CLOUDINARY ---
+        let capa = "";
+        if (d.imagem) {
+            // Se já for uma URL completa (Cloudinary), usa direto. Caso contrário, usa pasta local.
+            capa = d.imagem.startsWith("http") ? d.imagem : `imagens/${d.imagem}`;
+        } else {
+            // Fallback para capas padrão ou placeholder
+            capa = capasPadrao[nomeNorm] || `https://picsum.photos/seed/${d.id_desenho}/300/450`;
+        }
 
         const card = document.createElement("div");
         card.className = "card";
@@ -111,10 +120,16 @@ function atualizarBannerDinamico(d) {
     const info = document.getElementById("banner-info");
     const btnAssistir = document.getElementById("btnAssistir");
 
-    // Fecha qualquer vídeo que esteja rodando ao trocar de desenho
     fecharVideo();
 
-    const capa = d.imagem ? `imagens/${d.imagem}` : `https://picsum.photos/seed/${d.id_desenho}/800/450`;
+    // --- AJUSTE CLOUDINARY ---
+    let capa = "";
+    if (d.imagem) {
+        capa = d.imagem.startsWith("http") ? d.imagem : `imagens/${d.imagem}`;
+    } else {
+        capa = `https://picsum.photos/seed/${d.id_desenho}/800/450`;
+    }
+
     banner.style.backgroundImage = `linear-gradient(to top, #141414, transparent), url(${capa})`;
     
     document.getElementById("banner-titulo").innerText = d.nome;
@@ -132,7 +147,6 @@ function iniciarVideo() {
     info.style.display = "none";
     playerContainer.style.display = "block";
 
-    // Botão de fechar flutuante
     let htmlPlayer = `<button id="btnFecharVideo" onclick="fecharVideo()" style="position: absolute; top: 20px; right: 20px; z-index: 100; background: rgba(0,0,0,0.5); color: white; border: 2px solid white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 20px;">✕</button>`;
 
     if (videoAtual.includes("youtube.com") || videoAtual.includes("youtu.be")) {
@@ -210,8 +224,8 @@ document.getElementById("formDesenho").onsubmit = async (e) => {
     const idEdicao = document.getElementById("edit_id").value;
     const formData = new FormData(e.target);
     
-    // Adiciona explicitamente o ID se for edição
-    if (idEdicao) formData.append("id", idEdicao);
+    // IMPORTANTE: Garantir que o nome do campo seja 'id' para o PHP
+    if (idEdicao) formData.set("id", idEdicao);
 
     const url = idEdicao ? "api/editar.php" : "api/adicionar.php";
     try {
