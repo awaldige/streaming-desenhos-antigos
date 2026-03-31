@@ -7,11 +7,10 @@ const capasPadrao = {
 };
 
 let listaOriginal = [];
-// Agora controlamos se é admin e se está autenticado (assinante)
-let usuarioLogado = { isAdmin: false, estaAutenticado: false };
+let usuarioLogado = { isAdmin: false, estaAutenticado: false, nome: "" };
 let videoAtual = ""; 
 
-/* ===== 1. SISTEMA DE AUTENTICAÇÃO ===== */
+/* ===== 1. SISTEMA DE AUTENTICAÇÃO & CADASTRO ===== */
 
 function abrirModalLogin() { 
     document.getElementById("modalLogin").style.display = "block"; 
@@ -22,16 +21,16 @@ function fecharModalLogin() {
     document.getElementById("formLogin").reset();
 }
 
-// Funções para o novo Modal de Cadastro
 function abrirModalCadastro() {
-    // Você precisará criar esse ID no seu HTML ou usar o de login adaptado
     document.getElementById("modalCadastroUsuario").style.display = "block";
 }
 
 function fecharModalCadastro() {
     document.getElementById("modalCadastroUsuario").style.display = "none";
+    document.getElementById("formRegistro").reset();
 }
 
+// --- SUBMIT DO LOGIN ---
 document.getElementById("formLogin").onsubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
@@ -45,23 +44,23 @@ document.getElementById("formLogin").onsubmit = async (e) => {
         if (dados.sucesso) {
             usuarioLogado.isAdmin = dados.isAdmin;
             usuarioLogado.estaAutenticado = true;
+            usuarioLogado.nome = dados.nome;
             
             aplicarPermissoes();
             fecharModalLogin();
             
-            document.getElementById("btnLogar").style.display = "none";
+            document.getElementById("btnLogar").innerText = `Perfil: ${dados.nome}`;
             document.getElementById("btnSair").style.display = "block";
             
             renderizarCards(listaOriginal);
             
-            const msg = dados.isAdmin ? "Bem-vindo, Administrador! 🔓" : `Olá, ${dados.nome}! Acesso VIP liberado. 🍿`;
+            const msg = dados.isAdmin ? "Modo Administrador Ativado! 🔓" : `Olá, ${dados.nome}! Bom filme! 🍿`;
             mostrarNotificacao(msg);
             
         } else if (dados.status === "nao_encontrado") {
-            // LÓGICA DE DESVIO PARA CADASTRO
             if (confirm("Usuário não encontrado. Deseja criar uma conta de assinante agora?")) {
                 fecharModalLogin();
-                abrirModalCadastro(); // Abre a tela de cadastro
+                abrirModalCadastro();
             }
         } else {
             alert(dados.erro);
@@ -69,11 +68,43 @@ document.getElementById("formLogin").onsubmit = async (e) => {
     } catch (erro) { alert("Erro ao conectar com o servidor."); }
 };
 
+// --- SUBMIT DO CADASTRO DE ASSINANTE ---
+document.getElementById("formRegistro").onsubmit = async (e) => {
+    e.preventDefault();
+    
+    const btn = document.getElementById("btnFinalizarCadastro");
+    btn.innerText = "Criando conta...";
+    btn.disabled = true;
+
+    const formData = new FormData();
+    formData.append("nome", document.getElementById("reg_nome").value.trim());
+    formData.append("login", document.getElementById("reg_login").value.trim());
+    formData.append("senha", document.getElementById("reg_senha").value.trim());
+
+    try {
+        const res = await fetch("api/cadastrar.php", { method: "POST", body: formData });
+        const dados = await res.json();
+
+        if (dados.sucesso) {
+            mostrarNotificacao("Conta criada! ✨ Faça seu login.");
+            fecharModalCadastro();
+            abrirModalLogin(); 
+        } else {
+            alert("Erro: " + dados.erro);
+        }
+    } catch (erro) {
+        alert("Erro na conexão com o servidor de cadastro.");
+    } finally {
+        btn.innerText = "Finalizar Cadastro 🎬";
+        btn.disabled = false;
+    }
+};
+
 function fazerLogout() {
-    usuarioLogado = { isAdmin: false, estaAutenticado: false };
+    usuarioLogado = { isAdmin: false, estaAutenticado: false, nome: "" };
     aplicarPermissoes();
     fecharVideo();
-    document.getElementById("btnLogar").style.display = "block";
+    document.getElementById("btnLogar").innerText = "Entrar 🔑";
     document.getElementById("btnSair").style.display = "none";
     renderizarCards(listaOriginal);
     mostrarNotificacao("Sessão encerrada.");
@@ -87,7 +118,7 @@ function aplicarPermissoes() {
     }
 }
 
-/* ===== 2. CARREGAMENTO E RENDERIZAÇÃO (MANTIDOS) ===== */
+/* ===== 2. CARREGAMENTO E RENDERIZAÇÃO ===== */
 
 async function carregarDesenhos() {
     try {
@@ -170,9 +201,8 @@ function atualizarBannerDinamico(d) {
 }
 
 function iniciarVideo() {
-    // TRAVA: Só assiste se estiver logado (Admin ou Assinante)
     if (!usuarioLogado.estaAutenticado) {
-        mostrarNotificacao("Acesso restrito. Faça login para assistir! 🔒");
+        mostrarNotificacao("Acesso VIP necessário. Faça login! 🔒");
         abrirModalLogin();
         return;
     }
@@ -182,7 +212,7 @@ function iniciarVideo() {
     document.getElementById("banner-info").style.display = "none";
     playerContainer.style.display = "block";
 
-    let htmlPlayer = `<button id="btnFecharVideo" onclick="fecharVideo()">✕</button>`;
+    let htmlPlayer = `<button id="btnFecharVideo" onclick="fecharVideo()" style="position: absolute; top: 20px; right: 20px; z-index: 100; background: rgba(0,0,0,0.5); color: white; border: 2px solid white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 20px;">✕</button>`;
 
     if (videoAtual.includes("youtube.com") || videoAtual.includes("youtu.be")) {
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -202,7 +232,7 @@ function fecharVideo() {
     document.getElementById("banner-info").style.display = "block";
 }
 
-/* ===== 4. GESTÃO (CRUD) E UTILITÁRIOS (MANTIDOS) ===== */
+/* ===== 4. GESTÃO (CRUD) E UTILITÁRIOS ===== */
 
 function abrirModal() {
     if(!usuarioLogado.isAdmin) return alert("Acesso restrito ao Administrador.");
@@ -217,6 +247,22 @@ function fecharModal() {
     document.getElementById("modal-titulo").innerText = "Adicionar Desenho";
 }
 
+function filtrarDesenhos() {
+    const termo = document.getElementById("inputBusca").value.toLowerCase();
+    const filtrados = listaOriginal.filter(d => 
+        d.nome.toLowerCase().includes(termo) || (d.descricao && d.descricao.toLowerCase().includes(termo))
+    );
+    renderizarCards(filtrados);
+}
+
+function assistirAlgoAleatorio() {
+    if (listaOriginal.length === 0) return;
+    const sorteado = listaOriginal[Math.floor(Math.random() * listaOriginal.length)];
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    atualizarBannerDinamico(sorteado);
+    setTimeout(() => { iniciarVideo(); }, 800);
+}
+
 function mostrarNotificacao(msg) {
     const toast = document.getElementById("toast");
     toast.innerText = msg;
@@ -224,12 +270,11 @@ function mostrarNotificacao(msg) {
     setTimeout(() => { toast.style.display = "none"; }, 3000);
 }
 
-// Fechar modais ao clicar fora
 window.onclick = (e) => { 
     if (e.target.className === "modal") {
         fecharModal();
         fecharModalLogin();
-        if(document.getElementById("modalCadastroUsuario")) fecharModalCadastro();
+        fecharModalCadastro();
     }
 };
 
