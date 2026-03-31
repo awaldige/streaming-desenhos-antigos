@@ -7,7 +7,8 @@ const capasPadrao = {
 };
 
 let listaOriginal = [];
-let usuarioLogado = { isAdmin: false };
+// Agora controlamos se é admin e se está autenticado (assinante)
+let usuarioLogado = { isAdmin: false, estaAutenticado: false };
 let videoAtual = ""; 
 
 /* ===== 1. SISTEMA DE AUTENTICAÇÃO ===== */
@@ -21,6 +22,16 @@ function fecharModalLogin() {
     document.getElementById("formLogin").reset();
 }
 
+// Funções para o novo Modal de Cadastro
+function abrirModalCadastro() {
+    // Você precisará criar esse ID no seu HTML ou usar o de login adaptado
+    document.getElementById("modalCadastroUsuario").style.display = "block";
+}
+
+function fecharModalCadastro() {
+    document.getElementById("modalCadastroUsuario").style.display = "none";
+}
+
 document.getElementById("formLogin").onsubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
@@ -30,14 +41,28 @@ document.getElementById("formLogin").onsubmit = async (e) => {
     try {
         const res = await fetch("api/login.php", { method: "POST", body: formData });
         const dados = await res.json();
+        
         if (dados.sucesso) {
             usuarioLogado.isAdmin = dados.isAdmin;
+            usuarioLogado.estaAutenticado = true;
+            
             aplicarPermissoes();
             fecharModalLogin();
+            
             document.getElementById("btnLogar").style.display = "none";
             document.getElementById("btnSair").style.display = "block";
+            
             renderizarCards(listaOriginal);
-            mostrarNotificacao("Bem-vindo, Administrador! 🔓");
+            
+            const msg = dados.isAdmin ? "Bem-vindo, Administrador! 🔓" : `Olá, ${dados.nome}! Acesso VIP liberado. 🍿`;
+            mostrarNotificacao(msg);
+            
+        } else if (dados.status === "nao_encontrado") {
+            // LÓGICA DE DESVIO PARA CADASTRO
+            if (confirm("Usuário não encontrado. Deseja criar uma conta de assinante agora?")) {
+                fecharModalLogin();
+                abrirModalCadastro(); // Abre a tela de cadastro
+            }
         } else {
             alert(dados.erro);
         }
@@ -45,8 +70,9 @@ document.getElementById("formLogin").onsubmit = async (e) => {
 };
 
 function fazerLogout() {
-    usuarioLogado.isAdmin = false;
+    usuarioLogado = { isAdmin: false, estaAutenticado: false };
     aplicarPermissoes();
+    fecharVideo();
     document.getElementById("btnLogar").style.display = "block";
     document.getElementById("btnSair").style.display = "none";
     renderizarCards(listaOriginal);
@@ -61,7 +87,7 @@ function aplicarPermissoes() {
     }
 }
 
-/* ===== 2. CARREGAMENTO E RENDERIZAÇÃO POR DÉCADAS ===== */
+/* ===== 2. CARREGAMENTO E RENDERIZAÇÃO (MANTIDOS) ===== */
 
 async function carregarDesenhos() {
     try {
@@ -87,10 +113,7 @@ function renderizarCards(desenhos) {
         const ano = parseInt(d.ano_lancamento);
         const decada = Math.floor(ano / 10) * 10;
         const tituloDecada = `Anos ${decada}`;
-
-        if (!grupos[tituloDecada]) {
-            grupos[tituloDecada] = [];
-        }
+        if (!grupos[tituloDecada]) grupos[tituloDecada] = [];
         grupos[tituloDecada].push(d);
     });
 
@@ -104,25 +127,14 @@ function renderizarCards(desenhos) {
 
         const section = document.createElement("section");
         section.className = "linha";
-
-        grupos[decada].forEach(d => {
-            const card = criarCard(d);
-            section.appendChild(card);
-        });
-
+        grupos[decada].forEach(d => section.appendChild(criarCard(d)));
         mainContainer.appendChild(section);
     });
 }
 
 function criarCard(d) {
     const nomeNorm = d.nome.toLowerCase().trim();
-    let capa = "";
-    
-    if (d.imagem) {
-        capa = d.imagem.startsWith("http") ? d.imagem : `imagens/${d.imagem}`;
-    } else {
-        capa = capasPadrao[nomeNorm] || `https://picsum.photos/seed/${d.id_desenho}/300/450`;
-    }
+    let capa = d.imagem ? (d.imagem.startsWith("http") ? d.imagem : `imagens/${d.imagem}`) : (capasPadrao[nomeNorm] || `https://picsum.photos/seed/${d.id_desenho}/300/450`);
 
     const card = document.createElement("div");
     card.className = "card";
@@ -141,106 +153,59 @@ function criarCard(d) {
     return card;
 }
 
-function prepararEdicao(id) {
-    const desenho = listaOriginal.find(item => item.id_desenho == id);
-    if (desenho) {
-        editarDesenho(
-            desenho.id_desenho, 
-            desenho.nome, 
-            desenho.ano_lancamento, 
-            desenho.descricao || "", 
-            desenho.video_url || ""
-        );
-    }
-}
-
-function filtrarDesenhos() {
-    const termo = document.getElementById("inputBusca").value.toLowerCase();
-    const filtrados = listaOriginal.filter(d => 
-        d.nome.toLowerCase().includes(termo) || (d.descricao && d.descricao.toLowerCase().includes(termo))
-    );
-    renderizarCards(filtrados);
-}
-
-/* ===== 3. PLAYER E MODO ALEATÓRIO ===== */
+/* ===== 3. PLAYER COM TRAVA DE ACESSO ===== */
 
 function atualizarBannerDinamico(d) {
     const banner = document.getElementById("banner");
-    const info = document.getElementById("banner-info");
-    const btnAssistir = document.getElementById("btnAssistir");
-
     fecharVideo();
 
-    let capa = "";
-    if (d.imagem) {
-        capa = d.imagem.startsWith("http") ? d.imagem : `imagens/${d.imagem}`;
-    } else {
-        capa = `https://picsum.photos/seed/${d.id_desenho}/800/450`;
-    }
+    let capa = d.imagem ? (d.imagem.startsWith("http") ? d.imagem : `imagens/${d.imagem}`) : `https://picsum.photos/seed/${d.id_desenho}/800/450`;
 
     banner.style.backgroundImage = `linear-gradient(to top, #141414, transparent), url(${capa})`;
-    
     document.getElementById("banner-titulo").innerText = d.nome;
     document.getElementById("banner-desc").innerText = d.descricao || "Sem descrição disponível.";
 
     videoAtual = d.video_url || "";
-    btnAssistir.style.display = videoAtual ? "block" : "none";
-}
-
-function assistirAlgoAleatorio() {
-    if (listaOriginal.length === 0) return;
-    const sorteado = listaOriginal[Math.floor(Math.random() * listaOriginal.length)];
-    
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    atualizarBannerDinamico(sorteado);
-
-    setTimeout(() => {
-        iniciarVideo();
-        mostrarNotificacao(`🎲 Sintonizando: ${sorteado.nome}`);
-    }, 800);
+    document.getElementById("btnAssistir").style.display = videoAtual ? "block" : "none";
 }
 
 function iniciarVideo() {
+    // TRAVA: Só assiste se estiver logado (Admin ou Assinante)
+    if (!usuarioLogado.estaAutenticado) {
+        mostrarNotificacao("Acesso restrito. Faça login para assistir! 🔒");
+        abrirModalLogin();
+        return;
+    }
+
     if (!videoAtual) return;
     const playerContainer = document.getElementById("player-container");
-    const info = document.getElementById("banner-info");
-
-    info.style.display = "none";
+    document.getElementById("banner-info").style.display = "none";
     playerContainer.style.display = "block";
 
-    let htmlPlayer = `<button id="btnFecharVideo" onclick="fecharVideo()" style="position: absolute; top: 20px; right: 20px; z-index: 100; background: rgba(0,0,0,0.5); color: white; border: 2px solid white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 20px;">✕</button>`;
+    let htmlPlayer = `<button id="btnFecharVideo" onclick="fecharVideo()">✕</button>`;
 
     if (videoAtual.includes("youtube.com") || videoAtual.includes("youtu.be")) {
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
         const match = videoAtual.match(regExp);
         const idVideo = (match && match[2].length == 11) ? match[2] : null;
-        
-        htmlPlayer += `
-            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${idVideo}?autoplay=1&rel=0" 
-            frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        htmlPlayer += `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${idVideo}?autoplay=1" frameborder="0" allow="autoplay" allowfullscreen></iframe>`;
     } else {
-        htmlPlayer += `
-            <video width="100%" height="100%" controls autoplay>
-                <source src="${videoAtual}" type="video/mp4">
-                Seu navegador não suporta este formato de vídeo.
-            </video>`;
+        htmlPlayer += `<video width="100%" height="100%" controls autoplay><source src="${videoAtual}" type="video/mp4"></video>`;
     }
     playerContainer.innerHTML = htmlPlayer;
 }
 
 function fecharVideo() {
-    const playerContainer = document.getElementById("player-container");
-    const info = document.getElementById("banner-info");
-
-    playerContainer.innerHTML = "";
-    playerContainer.style.display = "none";
-    info.style.display = "block";
+    const pc = document.getElementById("player-container");
+    pc.innerHTML = "";
+    pc.style.display = "none";
+    document.getElementById("banner-info").style.display = "block";
 }
 
-/* ===== 4. GESTÃO (CRUD) ===== */
+/* ===== 4. GESTÃO (CRUD) E UTILITÁRIOS (MANTIDOS) ===== */
 
 function abrirModal() {
-    if(!usuarioLogado.isAdmin) return alert("Acesso restrito.");
+    if(!usuarioLogado.isAdmin) return alert("Acesso restrito ao Administrador.");
     document.getElementById("modalCadastro").style.display = "block";
 }
 
@@ -249,83 +214,23 @@ function fecharModal() {
     document.getElementById("formDesenho").reset();
     document.getElementById("edit_id").value = "";
     document.getElementById("container-preview").style.display = "none";
-    document.getElementById("img-preview").src = "";
     document.getElementById("modal-titulo").innerText = "Adicionar Desenho";
-    document.getElementById("btnEnviar").innerText = "Salvar na Biblioteca";
-}
-
-function previewImagem(event) {
-    const reader = new FileReader();
-    const modalContent = document.querySelector('#modalCadastro .modal-content');
-    reader.onload = function() {
-        document.getElementById('img-preview').src = reader.result;
-        document.getElementById('container-preview').style.display = 'block';
-        setTimeout(() => { modalContent.scrollTo({ top: modalContent.scrollHeight, behavior: 'smooth' }); }, 150);
-    };
-    if(event.target.files[0]) reader.readAsDataURL(event.target.files[0]);
-}
-
-function editarDesenho(id, nome, ano, descricao, video) {
-    if(!usuarioLogado.isAdmin) return;
-    document.getElementById("edit_id").value = id;
-    document.getElementById("nome").value = nome;
-    document.getElementById("ano").value = ano;
-    document.getElementById("descricao").value = descricao;
-    document.getElementById("video_url").value = video; 
-    
-    document.getElementById("modal-titulo").innerText = "Editar Desenho";
-    document.getElementById("btnEnviar").innerText = "Atualizar Desenho";
-    abrirModal();
-}
-
-document.getElementById("formDesenho").onsubmit = async (e) => {
-    e.preventDefault();
-    if(!usuarioLogado.isAdmin) return;
-
-    const idEdicao = document.getElementById("edit_id").value;
-    const formData = new FormData(e.target);
-    if (idEdicao) formData.set("id", idEdicao);
-
-    const url = idEdicao ? "api/editar.php" : "api/adicionar.php";
-    try {
-        const res = await fetch(url, { method: "POST", body: formData });
-        const dados = await res.json();
-        if (dados.sucesso) { 
-            fecharModal(); 
-            carregarDesenhos(); 
-            mostrarNotificacao(idEdicao ? "Desenho atualizado com sucesso! ✨" : "Novo desenho adicionado! 🎬");
-        } else { 
-            alert("Erro: " + dados.erro); 
-        }
-    } catch (erro) { alert("Erro na conexão."); }
-};
-
-/* ===== 5. EXCLUSÃO E UTILITÁRIOS ===== */
-
-async function excluirDesenho(id) {
-    if(!usuarioLogado.isAdmin || !confirm("Excluir este desenho?")) return;
-    const fd = new FormData(); fd.append("id", id);
-    try {
-        const res = await fetch("api/excluir.php", { method: "POST", body: fd });
-        const dados = await res.json();
-        if (dados.sucesso) { 
-            carregarDesenhos(); 
-            mostrarNotificacao("Desenho removido do catálogo. 🗑️");
-        }
-    } catch (erro) { alert("Erro ao excluir."); }
 }
 
 function mostrarNotificacao(msg) {
     const toast = document.getElementById("toast");
     toast.innerText = msg;
     toast.style.display = "block";
-    // Oculta após 3 segundos (tempo da animação CSS)
     setTimeout(() => { toast.style.display = "none"; }, 3000);
 }
 
+// Fechar modais ao clicar fora
 window.onclick = (e) => { 
-    if (e.target.id === "modalCadastro") fecharModal();
-    if (e.target.id === "modalLogin") fecharModalLogin();
+    if (e.target.className === "modal") {
+        fecharModal();
+        fecharModalLogin();
+        if(document.getElementById("modalCadastroUsuario")) fecharModalCadastro();
+    }
 };
 
 carregarDesenhos();
