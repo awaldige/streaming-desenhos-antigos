@@ -50,11 +50,11 @@
         <form id="formLogin">
             <div class="grupo-input">
                 <label for="login_user">Usuário</label>
-                <input type="text" id="login_user" placeholder="Seu login" required>
+                <input type="text" id="login_user" name="login" placeholder="Seu login" required>
             </div>
             <div class="grupo-input">
                 <label for="senha_user">Senha</label>
-                <input type="password" id="senha_user" placeholder="Sua senha" required>
+                <input type="password" id="senha_user" name="senha" placeholder="Sua senha" required>
             </div>
             <button type="submit" id="btnFazerLogin">Acessar Catálogo</button>
             <p style="text-align: center; margin-top: 15px; font-size: 0.8rem; color: #ccc;">
@@ -74,15 +74,15 @@
         <form id="formRegistro">
             <div class="grupo-input">
                 <label>Nome Completo</label>
-                <input type="text" id="reg_nome" placeholder="Seu nome" required>
+                <input type="text" id="reg_nome" name="nome" placeholder="Seu nome" required>
             </div>
             <div class="grupo-input">
                 <label>Usuário (Login)</label>
-                <input type="text" id="reg_login" placeholder="Ex: andre_vips" required>
+                <input type="text" id="reg_login" name="login" placeholder="Ex: andre_vips" required>
             </div>
             <div class="grupo-input">
                 <label>Senha</label>
-                <input type="password" id="reg_senha" placeholder="••••••••" required>
+                <input type="password" id="reg_senha" name="senha" placeholder="••••••••" required>
             </div>
             <button type="submit" id="btnFinalizarCadastro">Finalizar Cadastro 🎬</button>
         </form>
@@ -96,13 +96,14 @@
         <p style="color: #888; text-align: center; margin-bottom: 20px;">Gerencie seus dados de acesso</p>
 
         <form id="formEditarPerfil">
+            <input type="hidden" name="acao" value="editar">
             <div class="grupo-input">
                 <label>Nome de Exibição</label>
-                <input type="text" id="edit_nome_user" required>
+                <input type="text" id="edit_nome_user" name="nome" required>
             </div>
             <div class="grupo-input">
                 <label>Nova Senha (deixe em branco para manter)</label>
-                <input type="password" id="edit_senha_user" placeholder="••••••••">
+                <input type="password" id="edit_senha_user" name="senha" placeholder="••••••••">
             </div>
             <button type="submit" id="btnAtualizarPerfil" style="width: 100%; background: #e50914; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">
                 Atualizar Dados
@@ -126,7 +127,7 @@
         <section id="cadastro">
             <h2 id="modal-titulo">Adicionar Desenho</h2>
             <form id="formDesenho" enctype="multipart/form-data">
-                <input type="hidden" id="edit_id">
+                <input type="hidden" id="edit_id" name="id">
                 <div class="grupo-input">
                     <label for="nome">Título do Desenho</label>
                     <input type="text" id="nome" name="nome" placeholder="Ex: Scooby-Doo" required>
@@ -145,7 +146,7 @@
                 </div>
                 <div class="file-input-wrapper">
                     <label for="imagem">Capa do Desenho</label>
-                    <input type="file" id="imagem" name="imagem" accept="image/*" onchange="previewImagem(event)">
+                    <input type="file" id="imagem" name="imagem" accept="image/*">
                     <small id="aviso-imagem">Deixe vazio para manter a imagem atual ao editar.</small>
                 </div>
                 <div id="container-preview" style="display: none; margin-top: 10px; text-align: center;">
