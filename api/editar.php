@@ -1,5 +1,6 @@
 <?php
-ini_set('display_errors', 1);
+// Desative a exibição de erros HTML para não corromper o JSON de saída
+ini_set('display_errors', 0); 
 error_reporting(E_ALL);
 header("Content-Type: application/json; charset=utf-8");
 
@@ -14,6 +15,7 @@ $dbname = "defaultdb";
 $cloud_name = "dkpy0ps8t"; 
 $upload_preset = "streaming-desenhos-antigos";
 
+// Inicializa conexão SSL
 $conn = mysqli_init();
 mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
 $conectar = @mysqli_real_connect($conn, $host, $user, $pass, $dbname, $port, NULL, MYSQLI_CLIENT_SSL);
@@ -23,19 +25,20 @@ if (!$conectar) {
     exit;
 }
 
-$id = $_POST["id"] ?? null;
+// Captura o ID de forma flexível (id ou id_desenho)
+$id = $_POST["id"] ?? $_POST["id_desenho"] ?? null;
 $nome = $_POST["nome"] ?? '';
-$ano = (int)($_POST["ano"] ?? 0);
+$ano = (int)($_POST["ano"] ?? $_POST["ano_lancamento"] ?? 0);
 $desc = $_POST["descricao"] ?? '';
 $video_url = $_POST["video_url"] ?? ''; 
 $novaImagemUrl = null;
 
 if (!$id) {
-    echo json_encode(["sucesso" => false, "erro" => "ID ausente"]);
+    echo json_encode(["sucesso" => false, "erro" => "ID ausente para edição."]);
     exit;
 }
 
-// 1. Lógica para Processar Nova Imagem no Cloudinary (se houver)
+// 1. Processar Nova Imagem no Cloudinary (se houver arquivo)
 if (!empty($_FILES["imagem"]["tmp_name"])) {
     $arquivo_temporario = $_FILES["imagem"]["tmp_name"];
 
@@ -62,13 +65,13 @@ if (!empty($_FILES["imagem"]["tmp_name"])) {
     }
 }
 
-// 2. Execução do UPDATE
+// 2. Execução do UPDATE (Prepared Statements)
 if ($novaImagemUrl) {
-    // Atualiza tudo, incluindo a nova URL da imagem
+    // Atualiza tudo, incluindo a imagem
     $stmt = $conn->prepare("UPDATE desenhos SET nome=?, ano_lancamento=?, descricao=?, imagem=?, video_url=? WHERE id_desenho=?");
     $stmt->bind_param("sisssi", $nome, $ano, $desc, $novaImagemUrl, $video_url, $id);
 } else {
-    // Atualiza apenas os textos e o vídeo, mantendo a imagem que já está no banco
+    // Atualiza apenas textos e vídeo
     $stmt = $conn->prepare("UPDATE desenhos SET nome=?, ano_lancamento=?, descricao=?, video_url=? WHERE id_desenho=?");
     $stmt->bind_param("sissi", $nome, $ano, $desc, $video_url, $id);
 }
