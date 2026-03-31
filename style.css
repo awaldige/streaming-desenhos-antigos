@@ -1,260 +1,367 @@
-
-/* ===== RESET ===== */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+/* ===== 1. RESET E BASE ===== */
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
 }
 
 body {
-    font-family: 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background: #141414;
     color: white;
     overflow-x: hidden;
+    line-height: 1.5;
 }
 
-/* ===== HEADER NOVO ===== */
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* ===== 2. CABEÇALHO ===== */
+header {
+    background: rgba(0, 0, 0, 0.95);
     padding: 15px 4%;
-    background: rgba(0,0,0,0.95);
     position: sticky;
     top: 0;
     z-index: 100;
-}
-
-.logo {
-    font-size: 1.6rem;
-    font-weight: 900;
-    color: #e50914;
-}
-
-nav a {
-    margin: 0 15px;
-    color: #aaa;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-nav a:hover {
-    color: white;
-}
-
-.header-right {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.8);
 }
 
-.header input {
-    padding: 10px 15px;
-    border-radius: 20px;
-    border: none;
-    background: #222;
+header h1 {
+    color: #e50914;
+    font-size: 26px;
+    letter-spacing: -1px;
+    text-transform: uppercase;
+    font-weight: 900;
+}
+
+#btnLogar, #btnSair {
+    background: transparent;
+    border: 1px solid #e50914;
     color: white;
-}
-
-/* ===== BOTÕES ===== */
-button {
+    padding: 8px 20px;
+    border-radius: 4px;
     cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
 }
 
-/* ===== BANNER PREMIUM ===== */
+#btnLogar:hover { background: #e50914; box-shadow: 0 0 10px rgba(229, 9, 20, 0.5); }
+#btnSair { border-color: #555; color: #aaa; }
+#btnSair:hover { background: #333; color: white; }
+
+/* ===== 3. BANNER DINÂMICO & PLAYER ===== */
 #banner {
     height: 75vh;
+    min-height: 450px;
+    background-size: cover;
+    background-position: center;
     position: relative;
     display: flex;
     align-items: center;
     padding: 0 4%;
-    background-size: cover;
-    background-position: center;
+    transition: background-image 0.8s ease-in-out;
+    background-color: #000;
 }
 
-.overlay {
+#banner::before {
+    content: "";
     position: absolute;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to right, #141414 20%, transparent 70%);
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to right, #141414 15%, transparent 70%),
+                linear-gradient(to top, #141414 5%, transparent 50%);
+    z-index: 1;
 }
 
-#banner-info {
-    position: relative;
-    z-index: 2;
-    max-width: 600px;
-}
+#banner-info { position: relative; z-index: 10; max-width: 600px; }
 
 #banner-titulo {
-    font-size: 3rem;
+    font-size: 3.5rem;
+    margin-bottom: 10px;
     font-weight: 800;
+    line-height: 1.1;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
 }
 
 #banner-desc {
-    margin: 15px 0;
-    color: #ccc;
-}
-
-.banner-buttons button {
-    margin-right: 10px;
-    padding: 12px 25px;
-    border: none;
-    border-radius: 5px;
+    font-size: 1.1rem;
+    color: #e5e5e5;
+    margin-bottom: 25px;
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
 }
 
 #btnAssistir {
     background: #e50914;
     color: white;
+    border: none;
+    padding: 14px 35px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: none;
+    transition: all 0.2s;
 }
 
-#btnAssistir:hover {
-    background: #ff0a16;
-}
+#btnAssistir:hover { transform: scale(1.05); background: #ff0a16; box-shadow: 0 5px 15px rgba(229,9,20,0.4); }
 
-/* ===== LINHAS (NETFLIX STYLE) ===== */
-.linha {
-    padding: 20px 4%;
+/* Botão Fechar Vídeo no Banner */
+#btnFecharVideo {
+    position: absolute; 
+    top: 20px; 
+    right: 20px; 
+    z-index: 100; 
+    background: rgba(0,0,0,0.5); 
+    color: white; 
+    border: 2px solid white; 
+    width: 40px; 
+    height: 40px; 
+    border-radius: 50%; 
+    cursor: pointer; 
+    font-size: 20px;
+    transition: 0.3s;
 }
+#btnFecharVideo:hover { background: #e50914; border-color: #e50914; transform: rotate(90deg); }
 
-.linha h2 {
-    margin-bottom: 10px;
-}
-
-/* ===== CARROSSEL ===== */
-.carrossel {
+/* ===== 4. CONTROLES E BUSCA ===== */
+.controles-container {
     display: flex;
-    gap: 12px;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 4% 10px;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+#inputBusca {
+    flex-grow: 1;
+    max-width: 500px;
+    padding: 14px 25px;
+    border-radius: 30px;
+    border: 1px solid #444;
+    background: rgba(255,255,255,0.05);
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s;
+}
+
+#inputBusca:focus { border-color: #e50914; background: rgba(255,255,255,0.1); box-shadow: 0 0 10px rgba(229,9,20,0.2); }
+
+#btnAleatorio {
+    background: #333;
+    color: white;
+    border: 1px solid #444;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#btnAleatorio:hover { 
+    background: #444; 
+    border-color: #e50914; 
+    color: #e50914;
+    box-shadow: 0 0 15px rgba(229,9,20,0.2);
+}
+
+#btnAbrirModal {
+    background: #e50914;
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* ===== 5. FILEIRAS POR DÉCADA ===== */
+.categoria {
+    margin: 40px 4% 10px;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #fff;
+    border-left: 4px solid #e50914;
+    padding-left: 15px;
+}
+
+.linha {
+    display: flex;
     overflow-x: auto;
+    gap: 15px;
+    padding: 15px 4% 40px;
     scroll-behavior: smooth;
 }
 
-.carrossel::-webkit-scrollbar {
-    height: 6px;
-}
+.linha::-webkit-scrollbar { height: 6px; }
+.linha::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+.linha:hover::-webkit-scrollbar-thumb { background: #e50914; }
 
-.carrossel::-webkit-scrollbar-thumb {
-    background: #333;
-}
-
-/* ===== CARDS PREMIUM ===== */
 .card {
-    min-width: 160px;
-    height: 230px;
-    border-radius: 10px;
+    flex: 0 0 210px;
+    background: #1f1f1f;
+    border-radius: 6px;
     overflow: hidden;
-    background: #222;
-    transition: 0.3s;
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     position: relative;
 }
 
-.card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+.card:hover { transform: scale(1.1); z-index: 5; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+.card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; }
+.card .info { padding: 12px; background: linear-gradient(to top, #000, transparent); position: absolute; bottom: 0; width: 100%; }
+.card h3 { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* HOVER PRO */
-.card:hover {
-    transform: scale(1.12);
-    z-index: 10;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.7);
-}
-
-/* INFO NO HOVER */
-.card::after {
-    content: attr(data-title);
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 10px;
-    font-size: 0.8rem;
-    background: linear-gradient(to top, black, transparent);
-    opacity: 0;
-    transition: 0.3s;
-}
-
-.card:hover::after {
-    opacity: 1;
-}
-
-/* ===== CONTROLES ===== */
-.controles-container {
-    padding: 20px 4%;
-}
-
-/* ===== MODAIS (mantido + leve melhoria) ===== */
+/* ===== 6. MODAIS E FORMULÁRIOS ===== */
 .modal {
     display: none;
     position: fixed;
     z-index: 2000;
-    width: 100%;
-    height: 100%;
+    left: 0; top: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.9);
+    backdrop-filter: blur(10px);
+    animation: fadeIn 0.3s ease;
 }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .modal-content {
     background: #181818;
-    margin: 5% auto;
-    padding: 30px;
+    margin: 4vh auto;
+    padding: 40px;
     width: 90%;
     max-width: 500px;
-    border-radius: 10px;
+    border-radius: 15px;
+    border: 1px solid #333;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+    position: relative;
+    max-height: 92vh;
+    overflow-y: auto;
 }
 
-/* ===== INPUTS ===== */
+.modal-content h2 {
+    text-align: center;
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.fechar {
+    position: absolute;
+    right: 25px; top: 20px;
+    font-size: 30px;
+    color: #555;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.fechar:hover { color: #e50914; transform: rotate(90deg); }
+
+.grupo-input { margin-bottom: 20px; }
+.grupo-input label {
+    display: block;
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
 input, textarea {
     width: 100%;
-    padding: 12px;
-    margin-top: 5px;
-    background: #222;
-    border: none;
+    padding: 14px 18px;
+    background: #252525;
+    border: 2px solid transparent;
     color: white;
-    border-radius: 5px;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s;
 }
 
-/* ===== BOTÕES FORM ===== */
+input:focus, textarea:focus {
+    outline: none;
+    border-color: #e50914;
+    background: #2d2d2d;
+    box-shadow: 0 0 15px rgba(229, 9, 20, 0.15);
+}
+
 #btnEnviar, #btnFazerLogin {
+    width: 100%;
     background: #e50914;
     color: white;
     border: none;
-    padding: 12px;
+    padding: 16px;
+    font-weight: 900;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: 0.3s;
     margin-top: 10px;
 }
 
-/* ===== TOAST ===== */
-#toast {
+#btnEnviar:hover, #btnFazerLogin:hover {
+    background: #ff0a16;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(229, 9, 20, 0.3);
+}
+
+/* ===== 7. NOTIFICAÇÕES (TOAST) ===== */
+.toast {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #e50914;
-    padding: 15px;
+    bottom: 30px;
+    right: 30px;
+    background: #1f1f1f;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 8px;
+    border-left: 5px solid #e50914;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 9999;
     display: none;
+    font-weight: bold;
+    animation: slideIn 0.5s ease, fadeOut 0.5s ease 2.5s forwards;
 }
 
-/* ===== RESPONSIVO ===== */
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* Preview da Capa */
+#container-preview {
+    background: #111;
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px dashed #333;
+    margin-top: 15px;
+}
+
+#img-preview {
+    max-width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 5px;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Utilidades */
+.admin-only { display: none !important; }
+body.is-admin .admin-only { display: flex !important; }
+body.is-admin button#btnAbrirModal.admin-only { display: block !important; }
+
 @media (max-width: 768px) {
-    #banner {
-        height: 60vh;
-    }
-
-    #banner-titulo {
-        font-size: 2rem;
-    }
-
-    .card {
-        min-width: 130px;
-        height: 190px;
-    }
-}
-.btn-fav {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(0,0,0,0.7);
-    border: none;
-    color: gold;
-    font-size: 18px;
-    border-radius: 50%;
-    cursor: pointer;
+    #banner { height: 60vh; }
+    #banner-titulo { font-size: 2.2rem; }
+    .card { flex: 0 0 160px; }
+    .controles-container { justify-content: center; }
 }
