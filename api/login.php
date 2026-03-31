@@ -6,48 +6,49 @@ header("Content-Type: application/json; charset=utf-8");
 $host = "mysql-63c6648-streaming-desenhos.j.aivencloud.com";
 $port = 28840;
 $user = "avnadmin";
-$pass = "AVNS_y1R_KaHJC0qp4VAHb_k"; 
+$pass = "AVNS_y1R_KaHJC0qp4VAHb_k"; // Lembre-se de ocultar isso no GitHub!
 $dbname = "defaultdb";
 
-// Inicializa a conexão com SSL (Obrigatório para o Aiven)
 $conn = mysqli_init();
 mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
-
 $conectar = @mysqli_real_connect($conn, $host, $user, $pass, $dbname, $port, NULL, MYSQLI_CLIENT_SSL);
 
 if (!$conectar) {
-    echo json_encode(["sucesso" => false, "erro" => "Falha na conexão com o banco remoto: " . mysqli_connect_error()]);
+    echo json_encode(["sucesso" => false, "erro" => "Erro de conexão Cloud"]);
     exit;
 }
-// --------------------------
 
 $login_digitado = $_POST['login'] ?? '';
 $senha_digitada = $_POST['senha'] ?? '';
 
-// AJUSTE DE COLUNAS: Buscando 'usuario' em vez de 'login' para bater com o DBeaver
-$stmt = $conn->prepare("SELECT id, usuario, senha, nivel_acesso FROM usuarios WHERE usuario = ?");
+// AJUSTE: Usando exatamente 'id_usuario', 'login' e 'nivel' como no seu Diagrama ER
+$stmt = $conn->prepare("SELECT id_usuario, login, senha, nivel FROM usuarios WHERE login = ?");
 $stmt->bind_param("s", $login_digitado);
 $stmt->execute();
 $resultado = $stmt->get_result()->fetch_assoc();
 
 if ($resultado) {
-    // Verifica a senha (suporta password_hash ou texto puro para seus testes iniciais)
     if (password_verify($senha_digitada, $resultado['senha']) || $senha_digitada === $resultado['senha']) {
         
-        // Grava na sessão usando os nomes das colunas da tabela 'usuarios'
-        $_SESSION['usuario_id'] = $resultado['id'];
-        $_SESSION['nivel'] = $resultado['nivel_acesso'];
+        $_SESSION['usuario_id'] = $resultado['id_usuario'];
+        $_SESSION['nivel'] = $resultado['nivel'];
         
         echo json_encode([
-            "sucesso" => true, 
-            "isAdmin" => ($resultado['nivel_acesso'] === 'admin'),
-            "isAssinante" => true // Todo usuário cadastrado no banco é um assinante VIP
+            "sucesso" => true,
+            "status" => "logado", 
+            "isAdmin" => ($resultado['nivel'] === 'admin'),
+            "nome" => $resultado['login']
         ]);
     } else {
         echo json_encode(["sucesso" => false, "erro" => "Senha incorreta"]);
     }
 } else {
-    echo json_encode(["sucesso" => false, "erro" => "Usuário não encontrado no sistema"]);
+    // AQUI É O PULO DO GATO: Se não achar, avisa que o usuário precisa cadastrar
+    echo json_encode([
+        "sucesso" => false, 
+        "status" => "nao_encontrado", 
+        "erro" => "Usuário não encontrado. Deseja criar uma conta?"
+    ]);
 }
 
 $conn->close();
