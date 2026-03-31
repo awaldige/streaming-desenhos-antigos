@@ -12,8 +12,8 @@
 
 <header>
     <h1>📺 Desenhos Antigos</h1>
-    <div id="auth-controls">
-        <button id="btnLogar" onclick="abrirModalLogin()">Entrar 🔑</button>
+    <div id="auth-controls" style="display: flex; align-items: center; gap: 10px;">
+        <button id="btnLogar" onclick="usuarioLogado.estaAutenticado ? abrirModalPerfil() : abrirModalLogin()">Entrar 🔑</button>
         <button id="btnSair" onclick="fazerLogout()" style="display:none;">Sair</button>
     </div>
 </header>
@@ -36,7 +36,7 @@
         <input type="text" id="inputBusca" placeholder="🔍 O que você quer assistir hoje?" oninput="filtrarDesenhos()">
     </section>
     
-    <button onclick="assistirAlgoAleatorio()" style="background: #333; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px;">🎲 Surpreenda-me</button>
+    <button id="btnAleatorio" onclick="assistirAlgoAleatorio()">🎲 Surpreenda-me</button>
 
     <button id="btnAbrirModal" class="admin-only" onclick="abrirModal()">➕ Novo Desenho</button>
 </div>
@@ -84,10 +84,39 @@
                 <label>Senha</label>
                 <input type="password" id="reg_senha" placeholder="••••••••" required>
             </div>
-            <button type="submit" id="btnFinalizarCadastro" style="background: #e50914; color: white; width: 100%; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px;">
-                Finalizar Cadastro 🎬
+            <button type="submit" id="btnFinalizarCadastro">Finalizar Cadastro 🎬</button>
+        </form>
+    </div>
+</div>
+
+<div id="modalPerfilUsuario" class="modal">
+    <div class="modal-content" style="max-width: 400px; border-top: 4px solid #e50914;">
+        <span class="fechar" onclick="fecharModalPerfil()">&times;</span>
+        <h2 style="margin-bottom: 10px;">Minha Conta</h2>
+        <p style="color: #888; text-align: center; margin-bottom: 20px;">Gerencie seus dados de acesso</p>
+
+        <form id="formEditarPerfil">
+            <div class="grupo-input">
+                <label>Nome de Exibição</label>
+                <input type="text" id="edit_nome_user" required>
+            </div>
+            <div class="grupo-input">
+                <label>Nova Senha (deixe em branco para manter)</label>
+                <input type="password" id="edit_senha_user" placeholder="••••••••">
+            </div>
+            <button type="submit" id="btnAtualizarPerfil" style="width: 100%; background: #e50914; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">
+                Atualizar Dados
             </button>
         </form>
+
+        <hr style="margin: 25px 0; border: 0; border-top: 1px solid #333;">
+
+        <div style="text-align: center;">
+            <p style="font-size: 0.8rem; color: #666; margin-bottom: 10px;">Ações Críticas</p>
+            <button onclick="excluirMinhaConta()" style="background: none; border: 1px solid #444; color: #ff4444; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
+                ⚠️ Excluir minha conta permanentemente
+            </button>
+        </div>
     </div>
 </div>
 
@@ -128,7 +157,7 @@
     </div>
 </div>
 
-<div id="toast" style="display:none; position: fixed; bottom: 20px; right: 20px; background: #e50914; color: white; padding: 15px 25px; border-radius: 5px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.5);"></div>
+<div id="toast" style="display:none;"></div>
 
 <footer style="text-align: center; padding: 40px; color: #555; font-size: 0.9rem;">
     <p>&copy; 2026 Desenhos Antigos Streaming - André Waldige</p>
