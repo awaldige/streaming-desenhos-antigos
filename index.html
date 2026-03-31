@@ -1,80 +1,49 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Desenhos Antigos - Streaming</title>
-
+    
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📺</text></svg>">
 
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- HEADER PREMIUM -->
-<header class="header">
-    <div class="logo">🎬 NostalgiaTV</div>
-
-    <nav>
-        <a href="#">Início</a>
-        <a href="#">Categorias</a>
-        <a href="#">Minha Lista</a>
-    </nav>
-
-    <div class="header-right">
-        <input type="text" id="inputBusca" placeholder="Buscar..." oninput="filtrarDesenhos()">
-
-        <div id="auth-controls">
-            <button id="btnLogar" onclick="abrirModalLogin()">🔒</button>
-            <button id="btnSair" onclick="fazerLogout()" style="display:none;">Sair</button>
-        </div>
+<header>
+    <h1>📺 Desenhos Antigos</h1>
+    <div id="auth-controls">
+        <button id="btnLogar" onclick="abrirModalLogin()">Cadeado 🔒</button>
+        <button id="btnSair" onclick="fazerLogout()" style="display:none;">Sair (ADM)</button>
     </div>
 </header>
 
-<!-- BANNER CINEMATOGRÁFICO -->
 <section id="banner">
-    <div class="overlay"></div>
-
-    <div id="player-container" style="display:none;"></div>
-
-    <div id="banner-info">
-        <h2 id="banner-titulo">Bem-vindo</h2>
-        <p id="banner-desc">Selecione um desenho abaixo para assistir.</p>
-
-        <div class="banner-buttons">
-            <button id="btnAssistir" onclick="iniciarVideo()" style="display:none;">▶ Assistir</button>
-            <button onclick="assistirAlgoAleatorio()">🎲 Surpreenda-me</button>
+    <div id="player-container" style="display:none; width:100%; height:100%; position:absolute; top:0; left:0; z-index: 5; background: #000;">
         </div>
+
+    <div id="banner-info" style="z-index: 2;">
+        <h2 id="banner-titulo">Bem-vindo</h2>
+        <p id="banner-desc">Selecione um desenho abaixo para ver os detalhes.</p>
+        <button id="btnAssistir" onclick="iniciarVideo()" style="display:none;">
+            ▶ Assistir Agora
+        </button>
     </div>
 </section>
 
-<!-- CONTROLES -->
 <div class="controles-container">
+    <section id="busca-container">
+        <input type="text" id="inputBusca" placeholder="🔍 O que você quer assistir hoje?" oninput="filtrarDesenhos()">
+    </section>
+    
+    <button onclick="assistirAlgoAleatorio()" style="background: #333; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px;">🎲 Surpreenda-me</button>
+
     <button id="btnAbrirModal" class="admin-only" onclick="abrirModal()">➕ Novo Desenho</button>
 </div>
 
-<!-- CONTEÚDO PRINCIPAL -->
-<main>
+<main id="secoes-decadas"></main>
 
-    <section class="linha">
-        <h2>🔥 Em Destaque</h2>
-        <div class="carrossel" id="destaques"></div>
-    </section>
-
-    <section class="linha">
-        <h2>📺 Populares</h2>
-        <div class="carrossel" id="populares"></div>
-    </section>
-
-    <section class="linha">
-        <h2>🕰️ Por Década</h2>
-        <div id="secoes-decadas"></div>
-    </section>
-
-</main>
-
-<!-- MODAL LOGIN -->
 <div id="modalLogin" class="modal">
     <div class="modal-content" style="max-width: 350px;">
         <span class="fechar" onclick="fecharModalLogin()">&times;</span>
@@ -82,75 +51,69 @@
         <form id="formLogin">
             <div class="grupo-input">
                 <label for="login_user">Usuário</label>
-                <input type="text" id="login_user" required>
+                <input type="text" id="login_user" placeholder="Digite seu login" required>
             </div>
-
             <div class="grupo-input">
                 <label for="senha_user">Senha</label>
-                <input type="password" id="senha_user" required>
+                <input type="password" id="senha_user" placeholder="Digite sua senha" required>
             </div>
-
-            <button type="submit">Entrar</button>
+            <button type="submit" id="btnFazerLogin">Entrar</button>
         </form>
     </div>
 </div>
 
-<!-- MODAL CADASTRO -->
 <div id="modalCadastro" class="modal">
     <div class="modal-content">
-
         <span class="fechar" onclick="fecharModal()">&times;</span>
+        
+        <section id="cadastro">
+            <h2 id="modal-titulo">Adicionar Desenho</h2>
+            <form id="formDesenho" enctype="multipart/form-data">
+                
+                <input type="hidden" id="edit_id">
 
-        <h2 id="modal-titulo">Adicionar Desenho</h2>
+                <div class="grupo-input">
+                    <label for="nome">Título do Desenho</label>
+                    <input type="text" id="nome" name="nome" placeholder="Ex: Scooby-Doo" required>
+                </div>
 
-        <form id="formDesenho" enctype="multipart/form-data">
+                <div class="grupo-input">
+                    <label for="ano">Ano de Lançamento</label>
+                    <input type="number" id="ano" name="ano" placeholder="Ex: 1969" required>
+                </div>
 
-            <input type="hidden" id="edit_id">
+                <div class="grupo-input">
+                    <label for="descricao">Sinopse / Descrição</label>
+                    <textarea id="descricao" name="descricao" rows="3" placeholder="Conte um pouco sobre o desenho..." required></textarea>
+                </div>
 
-            <div class="grupo-input">
-                <label>Título</label>
-                <input type="text" id="nome" name="nome" required>
-            </div>
+                <div class="grupo-input">
+                    <label for="video_url">URL do Vídeo (YouTube ou MP4)</label>
+                    <input type="text" id="video_url" name="video_url" placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+                
+                <div class="file-input-wrapper">
+                    <label for="imagem">Capa do Desenho</label>
+                    <input type="file" id="imagem" name="imagem" accept="image/*" onchange="previewImagem(event)">
+                    <small id="aviso-imagem">Deixe vazio para manter a imagem atual ao editar.</small>
+                </div>
 
-            <div class="grupo-input">
-                <label>Ano</label>
-                <input type="number" id="ano" name="ano" required>
-            </div>
-
-            <div class="grupo-input">
-                <label>Descrição</label>
-                <textarea id="descricao" name="descricao" required></textarea>
-            </div>
-
-            <div class="grupo-input">
-                <label>URL do Vídeo</label>
-                <input type="text" id="video_url" name="video_url">
-            </div>
-
-            <div class="file-input-wrapper">
-                <label>Capa</label>
-                <input type="file" id="imagem" name="imagem" accept="image/*" onchange="previewImagem(event)">
-            </div>
-
-            <div id="container-preview" style="display:none;">
-                <img id="img-preview">
-            </div>
-
-            <button type="submit">Salvar</button>
-        </form>
-
+                <div id="container-preview" style="display: none; margin-top: 10px; text-align: center;">
+                    <img id="img-preview" src="" style="max-width: 100%; height: 150px; border-radius: 8px; object-fit: cover; border: 2px solid #e50914;">
+                </div>
+                
+                <button type="submit" id="btnEnviar">Salvar na Biblioteca</button>
+            </form>
+        </section>
     </div>
 </div>
 
-<!-- TOAST -->
-<div id="toast"></div>
+<div id="toast" style="display:none; position: fixed; bottom: 20px; right: 20px; background: #e50914; color: white; padding: 15px 25px; border-radius: 5px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.5);"></div>
 
-<!-- FOOTER -->
-<footer>
-    <p>&copy; 2026 NostalgiaTV</p>
+<footer style="text-align: center; padding: 40px; color: #555; font-size: 0.9rem;">
+    <p>&copy; 2026 Desenhos Antigos Streaming - Todos os direitos reservados.</p>
 </footer>
 
 <script src="script.js"></script>
 </body>
 </html>
-
