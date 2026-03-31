@@ -30,7 +30,6 @@ function fecharModalCadastro() {
     document.getElementById("formRegistro").reset();
 }
 
-// --- CONTROLE DO PERFIL ---
 function abrirModalPerfil() {
     if (!usuarioLogado.estaAutenticado) return abrirModalLogin();
     document.getElementById("edit_nome_user").value = usuarioLogado.nome;
@@ -42,7 +41,6 @@ function fecharModalPerfil() {
     document.getElementById("formEditarPerfil").reset();
 }
 
-// --- SUBMIT DO LOGIN ---
 document.getElementById("formLogin").onsubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
@@ -81,7 +79,6 @@ document.getElementById("formLogin").onsubmit = async (e) => {
     } catch (erro) { alert("Erro ao conectar com o servidor."); }
 };
 
-// --- SUBMIT DO CADASTRO DE ASSINANTE ---
 document.getElementById("formRegistro").onsubmit = async (e) => {
     e.preventDefault();
     const btn = document.getElementById("btnFinalizarCadastro");
@@ -112,7 +109,6 @@ document.getElementById("formRegistro").onsubmit = async (e) => {
     }
 };
 
-// --- ATUALIZAR PERFIL ---
 document.getElementById("formEditarPerfil").onsubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
@@ -135,7 +131,6 @@ document.getElementById("formEditarPerfil").onsubmit = async (e) => {
     } catch (erro) { alert("Erro ao atualizar perfil."); }
 };
 
-// --- EXCLUIR CONTA ---
 async function excluirMinhaConta() {
     const confirmar = confirm("AVISO CRÍTICO: Deseja realmente excluir sua conta? Esta ação não pode ser desfeita.");
     
@@ -241,7 +236,15 @@ function criarCard(d) {
             </div>
         </div>
     `;
-    card.onclick = () => atualizarBannerDinamico(d);
+    
+    // NAVEGAÇÃO MELHORADA: Clicou no card -> Topo -> Play
+    card.onclick = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        atualizarBannerDinamico(d);
+        // Delay para garantir que o banner atualizou a videoAtual antes de iniciar
+        setTimeout(() => { iniciarVideo(); }, 400);
+    };
+
     return card;
 }
 
