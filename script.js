@@ -1,4 +1,4 @@
-```javascript
+
 /* ===== CONFIGURAÇÕES E ESTADO GLOBAL ===== */
 const capasPadrao = {
     "he-man": "imagens/he-man.png",
@@ -165,4 +165,4 @@ async function carregarDesenhos() {
 }
 
 carregarDesenhos();
-```
+
