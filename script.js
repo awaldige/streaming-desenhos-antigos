@@ -7,10 +7,10 @@ const capasPadrao = {
 };
 
 let listaOriginal = [];
-let usuarioLogado = { isAdmin: false, estaAutenticado: false, nome: "" };
+let usuarioLogado = { isAdmin: false, estaAutenticado: false, nome: "", login: "" };
 let videoAtual = ""; 
 
-/* ===== 1. SISTEMA DE AUTENTICAÇÃO & CADASTRO ===== */
+/* ===== 1. SISTEMA DE AUTENTICAÇÃO, CADASTRO E PERFIL ===== */
 
 function abrirModalLogin() { 
     document.getElementById("modalLogin").style.display = "block"; 
@@ -30,6 +30,18 @@ function fecharModalCadastro() {
     document.getElementById("formRegistro").reset();
 }
 
+// --- CONTROLE DO PERFIL ---
+function abrirModalPerfil() {
+    if (!usuarioLogado.estaAutenticado) return abrirModalLogin();
+    document.getElementById("edit_nome_user").value = usuarioLogado.nome;
+    document.getElementById("modalPerfilUsuario").style.display = "block";
+}
+
+function fecharModalPerfil() {
+    document.getElementById("modalPerfilUsuario").style.display = "none";
+    document.getElementById("formEditarPerfil").reset();
+}
+
 // --- SUBMIT DO LOGIN ---
 document.getElementById("formLogin").onsubmit = async (e) => {
     e.preventDefault();
@@ -45,6 +57,7 @@ document.getElementById("formLogin").onsubmit = async (e) => {
             usuarioLogado.isAdmin = dados.isAdmin;
             usuarioLogado.estaAutenticado = true;
             usuarioLogado.nome = dados.nome;
+            usuarioLogado.login = document.getElementById("login_user").value.trim();
             
             aplicarPermissoes();
             fecharModalLogin();
@@ -71,7 +84,6 @@ document.getElementById("formLogin").onsubmit = async (e) => {
 // --- SUBMIT DO CADASTRO DE ASSINANTE ---
 document.getElementById("formRegistro").onsubmit = async (e) => {
     e.preventDefault();
-    
     const btn = document.getElementById("btnFinalizarCadastro");
     btn.innerText = "Criando conta...";
     btn.disabled = true;
@@ -100,8 +112,57 @@ document.getElementById("formRegistro").onsubmit = async (e) => {
     }
 };
 
+// --- ATUALIZAR PERFIL ---
+document.getElementById("formEditarPerfil").onsubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append("acao", "editar");
+    formData.append("nome", document.getElementById("edit_nome_user").value.trim());
+    formData.append("senha", document.getElementById("edit_senha_user").value.trim());
+
+    try {
+        const res = await fetch("api/gestao_conta.php", { method: "POST", body: formData });
+        const dados = await res.json();
+
+        if (dados.sucesso) {
+            mostrarNotificacao("Perfil atualizado com sucesso! ✨");
+            usuarioLogado.nome = document.getElementById("edit_nome_user").value.trim();
+            document.getElementById("btnLogar").innerText = `Perfil: ${usuarioLogado.nome}`;
+            fecharModalPerfil();
+        } else {
+            alert(dados.erro);
+        }
+    } catch (erro) { alert("Erro ao atualizar perfil."); }
+};
+
+// --- EXCLUIR CONTA ---
+async function excluirMinhaConta() {
+    const confirmar = confirm("AVISO CRÍTICO: Deseja realmente excluir sua conta? Esta ação não pode ser desfeita.");
+    
+    if (confirmar) {
+        const confirmLogin = prompt("Para confirmar, digite seu LOGIN (usuário):");
+        if (confirmLogin === null) return;
+
+        const formData = new FormData();
+        formData.append("acao", "excluir");
+        formData.append("confirmacao_login", confirmLogin);
+
+        try {
+            const res = await fetch("api/gestao_conta.php", { method: "POST", body: formData });
+            const dados = await res.json();
+
+            if (dados.sucesso) {
+                alert("Conta excluída. Esperamos te ver de novo em breve!");
+                location.reload();
+            } else {
+                alert(dados.erro);
+            }
+        } catch (erro) { alert("Erro ao processar exclusão."); }
+    }
+}
+
 function fazerLogout() {
-    usuarioLogado = { isAdmin: false, estaAutenticado: false, nome: "" };
+    usuarioLogado = { isAdmin: false, estaAutenticado: false, nome: "", login: "" };
     aplicarPermissoes();
     fecharVideo();
     document.getElementById("btnLogar").innerText = "Entrar 🔑";
@@ -275,6 +336,7 @@ window.onclick = (e) => {
         fecharModal();
         fecharModalLogin();
         fecharModalCadastro();
+        fecharModalPerfil();
     }
 };
 
