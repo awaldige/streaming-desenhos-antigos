@@ -12,48 +12,41 @@ let videoAtual = "";
 
 /* ===== 1. SISTEMA DE AUTENTICAÇÃO E PERFIL ===== */
 
-function abrirModalLogin() { 
-    document.getElementById("modalLogin").style.display = "block"; 
-}
-
+function abrirModalLogin() { document.getElementById("modalLogin").style.display = "block"; }
 function fecharModalLogin() { 
     document.getElementById("modalLogin").style.display = "none";
     document.getElementById("formLogin").reset();
 }
-
-function abrirModalCadastro() {
-    document.getElementById("modalCadastroUsuario").style.display = "block";
-}
-
-function fecharModalCadastro() {
+function abrirModalCadastro() { document.getElementById("modalCadastroUsuario").style.display = "block"; }
+function fecharModalCadastro() { 
     document.getElementById("modalCadastroUsuario").style.display = "none";
     document.getElementById("formRegistro").reset();
 }
-
 function abrirModalPerfil() {
     if (!usuarioLogado.estaAutenticado) return abrirModalLogin();
     document.getElementById("edit_nome_user").value = usuarioLogado.nome;
     document.getElementById("modalPerfilUsuario").style.display = "block";
 }
+function fecharModalPerfil() { document.getElementById("modalPerfilUsuario").style.display = "none"; }
 
-function fecharModalPerfil() {
-    document.getElementById("modalPerfilUsuario").style.display = "none";
-    document.getElementById("formEditarPerfil").reset();
-}
-
-// LOGIN
+// LOGIN - CORRIGIDO PARA GARANTIR ENVIO DE DADOS
 document.getElementById("formLogin").onsubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
+    
+    // Captura os dados do formulário garantindo que o target é o form
+    const form = e.target;
+    const formData = new FormData(form);
+
     try {
         const res = await fetch("api/login.php", { method: "POST", body: formData });
         const dados = await res.json();
+
         if (dados.sucesso) {
             usuarioLogado = { 
                 isAdmin: dados.isAdmin, 
                 estaAutenticado: true, 
                 nome: dados.nome, 
-                login: document.getElementById("login_user").value.trim() 
+                login: formData.get("login") 
             };
             aplicarPermissoes();
             fecharModalLogin();
@@ -66,8 +59,13 @@ document.getElementById("formLogin").onsubmit = async (e) => {
                 fecharModalLogin();
                 abrirModalCadastro();
             }
-        } else { alert(dados.erro); }
-    } catch (erro) { alert("Erro ao conectar com o servidor."); }
+        } else { 
+            alert(dados.erro); 
+        }
+    } catch (erro) { 
+        console.error("Erro no login:", erro);
+        alert("Erro ao conectar com o servidor."); 
+    }
 };
 
 function fazerLogout() {
@@ -147,7 +145,7 @@ function criarCard(d) {
     return card;
 }
 
-/* ===== 3. PLAYER E BANNER (COM SINOPSE) ===== */
+/* ===== 3. PLAYER E BANNER ===== */
 
 function atualizarBannerDinamico(d) {
     const banner = document.getElementById("banner");
@@ -156,8 +154,6 @@ function atualizarBannerDinamico(d) {
 
     banner.style.backgroundImage = `linear-gradient(to right, #141414 40%, transparent 90%), url(${capa})`;
     document.getElementById("banner-titulo").innerText = d.nome;
-    
-    // Atualiza a nova seção de sinopse e ano
     if(document.getElementById("banner-ano")) document.getElementById("banner-ano").innerText = d.ano_lancamento;
     document.getElementById("banner-desc").innerText = d.descricao || "Um clássico imperdível da animação.";
 
@@ -232,7 +228,11 @@ document.getElementById("formDesenho").onsubmit = async (e) => {
     e.preventDefault();
     const idEdicao = document.getElementById("edit_id").value;
     const formData = new FormData(e.target);
-    formData.append("id", idEdicao);
+    
+    // Se for edição, garantimos que o ID vá no POST
+    if (idEdicao) {
+        formData.set("id", idEdicao);
+    }
 
     const url = idEdicao ? "api/editar_desenho.php" : "api/cadastrar_desenho.php";
     
