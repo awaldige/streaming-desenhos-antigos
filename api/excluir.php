@@ -1,10 +1,10 @@
 <?php
-// Impede o PHP de enviar erros em formato HTML (evita o erro 'Unexpected token <')
-ini_set('display_errors', 1);
+// Impede o PHP de enviar erros em formato HTML
+ini_set('display_errors', 0); // Desative em produção para não quebrar o JSON
 error_reporting(E_ALL);
 header("Content-Type: application/json; charset=utf-8");
 
-// --- CONFIGURAÇÃO AIVEN (Ajuste a sua senha abaixo) ---
+// --- CONFIGURAÇÃO AIVEN ---
 $host = "mysql-63c6648-streaming-desenhos.j.aivencloud.com";
 $port = 28840;
 $user = "avnadmin";
@@ -23,36 +23,19 @@ if (!$conectar) {
     ]);
     exit;
 }
-// ------------------------------------------------------
 
-// 2. Captura o ID enviado pelo JavaScript (FormData)
-$id = $_POST["id"] ?? null;
+// Captura o ID (aceita 'id' ou 'id_desenho')
+$id = $_POST["id"] ?? $_POST["id_desenho"] ?? null;
 
 if (!$id) {
-    echo json_encode(["sucesso" => false, "erro" => "ID do desenho não foi recebido pelo PHP."]);
+    echo json_encode(["sucesso" => false, "erro" => "ID do desenho não recebido."]);
     exit;
 }
 
 try {
-    // 3. BUSCAR A IMAGEM ANTES DE EXCLUIR O REGISTRO
-    $sqlBusca = "SELECT imagem FROM desenhos WHERE id_desenho = ?";
-    $stmtBusca = $conn->prepare($sqlBusca);
-    $stmtBusca->bind_param("i", $id);
-    $stmtBusca->execute();
-    $resultado = $stmtBusca->get_result();
-    $dados = $resultado->fetch_assoc();
+    // Nota: Removi a busca de imagem e o unlink() pois agora as imagens 
+    // estão no Cloudinary e o servidor Render é efêmero (não guarda arquivos locais).
 
-    if ($dados && !empty($dados['imagem'])) {
-        $caminhoArquivo = "../imagens/" . $dados['imagem'];
-        
-        // Deleta o arquivo físico se ele existir
-        if (file_exists($caminhoArquivo)) {
-            @unlink($caminhoArquivo);
-        }
-    }
-    $stmtBusca->close();
-
-    // 4. EXCLUIR O REGISTRO DO BANCO DE DADOS
     $sqlDel = "DELETE FROM desenhos WHERE id_desenho = ?";
     $stmtDel = $conn->prepare($sqlDel);
     $stmtDel->bind_param("i", $id);
